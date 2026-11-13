@@ -1,0 +1,85 @@
+---
+// Interruptor sol / luna. Sin elección guardada, marca el modo del sistema; al elegir, lo guarda en localStorage.
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = ui[locale].theme;
+---
+
+<div class="toggle" role="group" aria-label={t.label}>
+  <button type="button" data-mode="light" aria-label={t.light} aria-pressed="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="4"></circle>
+      <path d="M12 2v2M12 20v2M4.9 4.9l1.4 1.4M17.7 17.7l1.4 1.4M2 12h2M20 12h2M4.9 19.1l1.4-1.4M17.7 6.3l1.4-1.4"></path>
+    </svg>
+  </button>
+  <button type="button" data-mode="dark" aria-label={t.dark} aria-pressed="false">
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+      <path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"></path>
+    </svg>
+  </button>
+</div>
+
+<script>
+  const media = window.matchMedia("(prefers-color-scheme: dark)");
+  const root = document.documentElement;
+  const current = () => (root.dataset.theme as "light" | "dark" | undefined) ?? (media.matches ? "dark" : "light");
+
+  const sync = () => {
+    const mode = current();
+    document.querySelectorAll<HTMLButtonElement>(".toggle button").forEach((b) => {
+      b.setAttribute("aria-pressed", String(b.dataset.mode === mode));
+    });
+  };
+
+  document.querySelectorAll<HTMLButtonElement>(".toggle button").forEach((b) => {
+    b.addEventListener("click", () => {
+      const mode = b.dataset.mode as "light" | "dark";
+      root.dataset.theme = mode;
+      try {
+        localStorage.setItem("theme", mode);
+      } catch {}
+      sync();
+    });
+  });
+  media.addEventListener("change", sync);
+  sync();
+</script>
+
+<style>
+  .toggle {
+    display: inline-flex;
+    gap: 2px;
+    padding: 3px;
+    border: 1px solid var(--hero-muted);
+    border-radius: 999px;
+  }
+  button {
+    display: grid;
+    place-items: center;
+    width: 36px;
+    height: 30px;
+    padding: 0;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--hero-muted);
+    cursor: pointer;
+    transition: background 0.2s, color 0.2s;
+  }
+  button svg {
+    width: 18px;
+    height: 18px;
+  }
+  button[aria-pressed="true"] {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  button:not([aria-pressed="true"]):hover {
+    color: var(--hero-ink);
+  }
+</style>

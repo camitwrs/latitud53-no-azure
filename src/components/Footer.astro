@@ -1,0 +1,97 @@
+---
+import Logo from "./Logo.astro";
+import { ui, homePath, type Locale } from "../i18n/ui";
+import { privacy, privacyPath } from "../i18n/privacy";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = ui[locale];
+---
+
+<footer class="footer">
+  <!-- Arriba: marca y navegación. Abajo: lo legal (copyright a la izquierda, política de privacidad a la derecha). -->
+  <div class="container top">
+    <a class="brand" href={homePath(locale)} aria-label="Latitud53"><Logo size={28} /></a>
+    <nav aria-label={t.footer.navLabel}>
+      <ul>
+        {t.nav.map((item) => <li><a href={`${homePath(locale)}#${item.id}`}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+  </div>
+  <div class="container bottom">
+    <p class="copy">{t.footer.copyright}</p>
+    <a class="legal" href={privacyPath(locale)}>{privacy[locale].title}</a>
+  </div>
+</footer>
+
+<style>
+  /* El footer es oscuro en ambos modos: el logo usa su versión para fondo oscuro. */
+  .footer {
+    --logo-fg: #f3f8fb;
+    --logo-accent: #35c2e8;
+    --logo-num: #35c2e8;
+    --logo-gap: var(--footer-bg);
+    background: var(--footer-bg);
+    color: var(--footer-ink);
+    border-top: 1px solid rgb(243 248 251 / 0.15);
+  }
+  .top,
+  .bottom {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 28px;
+  }
+  .top {
+    padding-block: 40px 32px;
+  }
+  .bottom {
+    padding-block: 20px 28px;
+    border-top: 1px solid rgb(243 248 251 / 0.12);
+    font-size: 0.8125rem;
+  }
+  .brand {
+    display: inline-flex;
+  }
+  ul {
+    display: flex;
+    gap: 28px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.875rem;
+  }
+  a {
+    text-decoration: none;
+    transition: color 0.2s;
+  }
+  nav a:hover,
+  .legal:hover {
+    color: var(--footer-accent);
+  }
+  .copy {
+    opacity: 0.75;
+  }
+
+  @media (max-width: 900px) {
+    .top,
+    .bottom {
+      flex-direction: column;
+      align-items: flex-start;
+    }
+    .top {
+      gap: 24px;
+    }
+    .bottom {
+      gap: 12px;
+    }
+    ul {
+      flex-direction: column;
+      gap: 14px;
+      font-size: 1rem;
+    }
+  }
+</style>

@@ -1,0 +1,253 @@
+---
+import { heroGlobeSvg } from "../lib/globe";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const t = ui[Astro.props.locale].hero;
+// Cada palabra del titular en su propio span, para que entren una tras otra. El texto del h1 no cambia.
+const words = t.title.split(" ");
+---
+
+<section class="hero">
+  <div class="container grid">
+    <div class="text">
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h1>
+        {
+          words.map((w, i) => (
+            <>
+              <span class="w" style={`--i:${i}`}>{w}</span>
+              {i < words.length - 1 && " "}
+            </>
+          ))
+        }
+      </h1>
+      <p class="sub">{t.sub}</p>
+      <div class="ctas">
+        <a class="btn primary" href="#contacto">{t.cta}</a>
+        <a class="btn secondary" href="#productos">{t.cta2}</a>
+      </div>
+    </div>
+    <div class="globe" data-globe set:html={heroGlobeSvg()} />
+  </div>
+</section>
+
+<script>
+  // Globo del hero: al cargar gira hasta dejar Punta Arenas al frente, dibuja el paralelo 53° y marca el punto.
+  // Luego sigue al mouse y al scroll. Con movimiento reducido queda quieto.
+  import { heroGlobeData, latLabel, HERO_LON } from "../lib/globe";
+
+  const box = document.querySelector<HTMLElement>("[data-globe]");
+  const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  if (box && !reduce) {
+    const q = <T extends Element>(sel: string) => box.querySelector<T>(sel)!;
+    const land = q<SVGPathElement>(".land"), grid = q<SVGPathElement>(".grid"), parallel = q<SVGPathElement>(".parallel");
+    const pin = q<SVGCircleElement>(".pin"), halo = q<SVGCircleElement>(".halo"), lat = q<SVGTextElement>(".lat");
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+
+    let drawn = NaN;
+    const draw = (l: number) => {
+      drawn = l;
+      const d = heroGlobeData(l);
+      land.setAttribute("d", d.land);
+      grid.setAttribute("d", d.grid);
+      parallel.setAttribute("d", d.parallel);
+      for (const c of [pin, halo]) {
+        c.setAttribute("cx", d.pin.x);
+        c.setAttribute("cy", d.pin.y);
+        c.style.visibility = d.pin.visible ? "" : "hidden";
+      }
+      const label = latLabel(d.pin);
+      lat.setAttribute("x", label.x);
+      lat.setAttribute("y", label.y);
+      lat.style.visibility = d.pin.visible ? "" : "hidden";
+    };
+
+    // Un solo movimiento: `base` sigue suave al mouse (por todo el hero) y al scroll (lo que lo mueve en el celular),
+    // y la entrada se le suma como un giro extra de 70° que se desvanece. Así, si el mouse ya está en el hero al cargar,
+    // el globo llega directo a esa posición en vez de saltar después.
+    const SPIN = 70, ENTRY = 1600;
+    const hero = box.closest("section")!;
+    let hover = 0, visible = true, base = HERO_LON;
+    hero.addEventListener("pointermove", (e) => {
+      if (e.pointerType !== "mouse") return;
+      const r = box.getBoundingClientRect();
+      hover = Math.max(-1, Math.min(1, (e.clientX - (r.left + r.width / 2)) / (window.innerWidth / 2)));
+    });
+    hero.addEventListener("pointerleave", () => (hover = 0));
+    new IntersectionObserver(([e]) => (visible = e.isIntersecting)).observe(hero);
+
+    // Entrada: parte 70° al este (África y Europa a la vista, que son continentes dibujados). Primero se dibuja la
+    // posición inicial y recién entonces el globo aparece (.anim).
+    draw(HERO_LON + SPIN);
+    box.classList.add("anim");
+    const start = performance.now();
+
+    const loop = (now: number) => {
+      const scroll = Math.max(0, Math.min(1, window.scrollY / hero.offsetHeight));
+      // Mouse a la derecha: el globo gira hacia el este (Punta Arenas se va a la izquierda); scroll: gira hacia el oeste.
+      base += (HERO_LON + hover * 45 - scroll * 70 - base) * 0.08;
+      const l = base + SPIN * (1 - ease(Math.min(1, (now - start) / ENTRY)));
+      if (visible && Math.abs(l - drawn) > 0.02) draw(l);
+      requestAnimationFrame(loop);
+    };
+    requestAnimationFrame(loop);
+
+    // La latitud se empieza a dibujar mientras el giro todavía frena; la etiqueta cuenta de 0° a 53° S.
+    setTimeout(() => {
+      box.classList.add("drawn");
+      const t0 = performance.now();
+      const count = (now: number) => {
+        const t = Math.min(1, (now - t0) / 900);
+        lat.textContent = Math.round(53 * ease(t)) + "° S";
+        if (t < 1) requestAnimationFrame(count);
+      };
+      lat.textContent = "0° S";
+      requestAnimationFrame(count);
+    }, 700);
+  }
+</script>
+
+<style>
+  .hero {
+    background: var(--hero-bg);
+    color: var(--hero-ink);
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 700px) minmax(0, 440px);
+    justify-content: space-between;
+    align-items: center;
+    gap: 48px;
+    padding-block: 96px;
+  }
+  .text {
+    display: grid;
+    gap: 28px;
+  }
+  .eyebrow {
+    color: var(--eyebrow);
+  }
+  /* Titular palabra por palabra (solo con html.reveal: JavaScript activo y sin movimiento reducido). */
+  :global(.reveal) .w {
+    display: inline-block;
+    opacity: 0;
+    transform: translateY(0.35em);
+    animation: word-in 0.6s cubic-bezier(0.2, 0.7, 0.2, 1) forwards;
+    /* Ritmo igual al globo: la última palabra termina (~1,65 s) junto con el paralelo y el contador de 53° S. */
+    animation-delay: calc(0.25s + var(--i) * 0.2s);
+  }
+  @keyframes word-in {
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+  h1 {
+    font-size: clamp(2.5rem, 5vw, 4.25rem);
+  }
+  .sub {
+    max-width: 560px;
+    color: var(--hero-muted);
+    font-size: clamp(1.0625rem, 1.6vw, 1.25rem);
+  }
+  .ctas {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+  }
+  .btn {
+    padding: 16px 28px;
+    border-radius: var(--radius);
+    font-weight: 700;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s, background 0.2s;
+  }
+  .btn:hover {
+    transform: translateY(-1px);
+  }
+  .primary {
+    background: var(--accent);
+    color: var(--on-accent);
+  }
+  .primary:hover {
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+  .secondary {
+    border: 1.5px solid var(--hero-ink);
+    color: var(--hero-ink);
+  }
+  .globe :global(svg) {
+    width: 100%;
+    height: auto;
+  }
+  /* Animación de entrada. html.reveal lo pone el <head> antes de pintar, solo con JavaScript y sin movimiento
+     reducido: así el globo terminado que trae el HTML no alcanza a verse antes de animarse. Sin .reveal, el globo se ve
+     quieto y completo. El script agrega .anim al empezar y .drawn al terminar el giro. */
+  :global(.reveal) .globe {
+    transition: opacity 0.5s ease-out;
+  }
+  :global(.reveal) .globe:not(.anim) {
+    opacity: 0;
+  }
+  :global(.reveal) .globe :global(.parallel) {
+    stroke-dasharray: 1;
+    transition: stroke-dashoffset 0.7s ease-out;
+  }
+  :global(.reveal) .globe:not(.drawn) :global(.parallel) {
+    stroke-dashoffset: 1;
+  }
+  :global(.reveal) .globe :global(.pin),
+  :global(.reveal) .globe :global(.halo) {
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+  :global(.reveal) .globe :global(.pin) {
+    transition: transform 0.45s cubic-bezier(0.34, 1.56, 0.64, 1) 0.45s;
+  }
+  :global(.reveal) .globe:not(.drawn) :global(.pin) {
+    transform: scale(0);
+  }
+  :global(.reveal) .globe :global(.lat) {
+    transition: opacity 0.3s;
+  }
+  :global(.reveal) .globe:not(.drawn) :global(.lat) {
+    opacity: 0;
+  }
+  .globe.drawn :global(.halo) {
+    animation: pulse 2.4s ease-out 0.9s infinite;
+  }
+  @keyframes pulse {
+    0% {
+      transform: scale(1);
+      opacity: 0.55;
+    }
+    100% {
+      transform: scale(3.4);
+      opacity: 0;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 24px;
+      padding-block: 40px 56px;
+    }
+    .text {
+      gap: 24px;
+    }
+    .btn {
+      flex: 1 1 100%;
+      text-align: center;
+    }
+    .globe {
+      width: min(240px, 70%);
+      margin-inline: auto;
+    }
+  }
+</style>

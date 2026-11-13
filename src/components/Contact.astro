@@ -1,0 +1,365 @@
+---
+// Contacto: datos con íconos y formulario. El formulario envía JSON a /api/contact (Azure Function, etapa 4);
+// mientras no exista, muestra el mensaje de error con el correo. Sin JavaScript, el envío nativo va al mismo endpoint.
+import { ui, type Locale } from "../i18n/ui";
+import { privacyPath, POLICY_VERSION } from "../i18n/privacy";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const t = ui[locale].contact;
+const icons = {
+  pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
+  mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
+  whatsapp: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.2 7.5c.3 0 .6.2.7.5l.7 1.7c.1.3 0 .6-.2.8l-.6.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.6c.2-.2.5-.3.8-.2l1.7.7c.3.1.5.4.5.7v1.4c0 .5-.4.9-.9.9C11.1 17 7 12.9 7 8.4c0-.5.4-.9.9-.9z" style="fill:var(--eyebrow);stroke:none"/>',
+};
+// El número todavía es de ejemplo: solo se enlaza a WhatsApp cuando tenga dígitos reales.
+const waDigits = t.info.whatsapp.replace(/\D/g, "");
+const waLink = /X/.test(t.info.whatsapp) ? null : `https://wa.me/${waDigits}`;
+---
+
+<section id="contacto" class="contact" aria-labelledby="contacto-titulo">
+  <div class="container grid">
+    <div class="intro" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2 id="contacto-titulo">{t.title}</h2>
+      <p class="text">{t.text}</p>
+      <ul class="info">
+        <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.pin} /><span>{t.info.place}</span></li>
+        <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.mail} /><a href={`mailto:${t.info.email}`}>{t.info.email}</a></li>
+        <li>
+          <svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.whatsapp} />
+          {waLink ? <a href={waLink} rel="noopener">{t.info.whatsapp}</a> : <span>{t.info.whatsapp}</span>}
+        </li>
+      </ul>
+    </div>
+
+    <form class="form" action="/api/contact" method="post" data-contact data-locale={locale} data-policy={POLICY_VERSION} data-reveal style="--delay:0.1s">
+      {
+        (["name", "email", "message"] as const).map((key) => {
+          const [label, placeholder] = t.fields[key];
+          const id = `contacto-${key}`;
+          return (
+            <div class:list={["field", { half: key !== "message" }]}>
+              <label for={id}>{label}</label>
+              {key === "message" ? (
+                <textarea id={id} name={key} rows="3" placeholder={placeholder} required maxlength="4000" />
+              ) : (
+                <input
+                  id={id}
+                  name={key}
+                  type={key === "email" ? "email" : "text"}
+                  placeholder={placeholder}
+                  autocomplete={key}
+                  required
+                  maxlength="200"
+                />
+              )}
+            </div>
+          );
+        })
+      }
+      <!-- Trampa para bots: los humanos no la ven ni la completan. -->
+      <div class="hp" aria-hidden="true">
+        <label for="contacto-web">Web</label>
+        <input id="contacto-web" name="website" type="text" tabindex="-1" autocomplete="off" />
+      </div>
+      <!-- Consentimiento (Ley 21.719, Art. 12): previo, informado y con un acto afirmativo; la casilla no viene marcada. -->
+      <label class="consent">
+        <input type="checkbox" name="consent" value="yes" required />
+        <span>{t.consent[0]}<a href={privacyPath(locale)} target="_blank" rel="noopener">{t.consent[1]}</a>{t.consent[2]}</span>
+      </label>
+      <button type="submit" data-sending={t.sending}>
+        <span class="spinner" aria-hidden="true"></span>
+        <svg class="check" viewBox="0 0 24 24" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5" pathLength="1"></path></svg>
+        <span class="label">{t.send}</span>
+      </button>
+      <p class="status" role="status" aria-live="polite" data-sent={t.sent} data-error={t.error}></p>
+    </form>
+  </div>
+</section>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>("form[data-contact]").forEach((form) => {
+    // Estados del botón en form[data-state]: "sending" (indicador de carga), "ok" (check animado) y "error".
+    const button = form.querySelector("button")!;
+    const labelEl = button.querySelector<HTMLElement>(".label")!;
+    const status = form.querySelector<HTMLElement>(".status")!;
+    const label = labelEl.textContent;
+    let resetTimer = 0;
+    form.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      clearTimeout(resetTimer);
+      button.disabled = true;
+      form.dataset.state = "sending";
+      labelEl.textContent = button.dataset.sending ?? label;
+      status.textContent = "";
+      status.dataset.state = "";
+      const data = Object.fromEntries(new FormData(form));
+      try {
+        const res = await fetch(form.action, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // La versión de la política aceptada queda como prueba del consentimiento.
+          body: JSON.stringify({ ...data, locale: form.dataset.locale, policyVersion: form.dataset.policy }),
+        });
+        if (!res.ok) throw new Error(String(res.status));
+        form.reset();
+        status.textContent = status.dataset.sent ?? "";
+        status.dataset.state = "ok";
+        form.dataset.state = "ok";
+      } catch {
+        status.textContent = status.dataset.error ?? "";
+        status.dataset.state = "error";
+        form.dataset.state = "error";
+      } finally {
+        button.disabled = false;
+        labelEl.textContent = label;
+        resetTimer = window.setTimeout(() => (form.dataset.state = ""), 3000);
+      }
+    });
+  });
+</script>
+
+<style>
+  .contact {
+    background: var(--hero-bg);
+    color: var(--hero-ink);
+    padding-block: 96px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 560px) minmax(0, 640px);
+    justify-content: space-between;
+    gap: 64px;
+  }
+  .intro {
+    display: grid;
+    align-content: start;
+    gap: 24px;
+  }
+  .eyebrow {
+    color: var(--eyebrow);
+  }
+  h2 {
+    font-size: clamp(2.125rem, 4.2vw, 3.25rem);
+  }
+  .text {
+    max-width: 480px;
+    color: var(--hero-muted);
+    font-size: 1.125rem;
+  }
+  .info {
+    display: grid;
+    gap: 14px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    font-size: 1.0625rem;
+  }
+  .info li {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+  .info svg {
+    width: 24px;
+    height: 24px;
+    flex: none;
+    fill: none;
+    stroke: var(--eyebrow);
+    stroke-width: 1.8;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .info a {
+    text-underline-offset: 3px;
+    transition: color 0.2s;
+  }
+  .info a:hover {
+    color: var(--eyebrow);
+  }
+  /* Nombre y correo comparten fila en escritorio; el resto ocupa todo el ancho. */
+  .form {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    padding: 40px;
+    border-radius: var(--radius);
+    background: var(--card);
+    color: var(--page-ink);
+  }
+  .form > * {
+    grid-column: 1 / -1;
+  }
+  .form > .half {
+    grid-column: auto;
+  }
+  .field {
+    display: grid;
+    gap: 8px;
+  }
+  label {
+    font-weight: 700;
+    font-size: 0.875rem;
+  }
+  input,
+  textarea {
+    width: 100%;
+    padding: 15px 16px;
+    border: 1px solid var(--line);
+    border-radius: var(--radius);
+    background: var(--page-bg);
+    color: var(--page-ink);
+    font: inherit;
+  }
+  input::placeholder,
+  textarea::placeholder {
+    color: var(--page-muted);
+  }
+  input:focus-visible,
+  textarea:focus-visible {
+    border-color: var(--accent);
+    outline-offset: 0;
+  }
+  /* El mensaje parte en 3 líneas y crece al escribir (donde el navegador lo soporta). */
+  textarea {
+    resize: vertical;
+    min-height: 96px;
+    max-height: 320px;
+    field-sizing: content;
+  }
+  .consent {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    color: var(--page-muted);
+    font-size: 0.875rem;
+    font-weight: 400;
+    line-height: 1.5;
+    cursor: pointer;
+  }
+  .consent input {
+    width: 18px;
+    height: 18px;
+    margin: 1px 0 0;
+    padding: 0;
+    flex: none;
+    accent-color: var(--accent);
+  }
+  .consent a {
+    color: var(--eyebrow-l);
+    text-underline-offset: 3px;
+  }
+  .hp {
+    position: absolute;
+    left: -9999px;
+  }
+  button {
+    justify-self: start;
+    padding: 16px 28px;
+    border: 0;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font: inherit;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.2s, opacity 0.2s;
+  }
+  button:hover {
+    transform: translateY(-1px);
+  }
+  button:disabled {
+    cursor: progress;
+  }
+  button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+  }
+  .spinner,
+  .check {
+    display: none;
+    flex: none;
+    width: 18px;
+    height: 18px;
+  }
+  .spinner {
+    border: 2px solid currentColor;
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+  }
+  .check {
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2.6;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+  }
+  .check path {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  [data-state="sending"] .spinner,
+  [data-state="ok"] .check {
+    display: block;
+  }
+  [data-state="ok"] .check path {
+    animation: draw 0.5s ease-out forwards;
+  }
+  [data-state="error"] button {
+    animation: shake 0.4s;
+  }
+  @keyframes spin {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+  @keyframes draw {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+  @keyframes shake {
+    25% {
+      transform: translateX(-4px);
+    }
+    75% {
+      transform: translateX(4px);
+    }
+  }
+  .status:empty {
+    display: none;
+  }
+  .status {
+    padding: 16px 20px;
+    border: 1px solid var(--accent);
+    border-radius: var(--radius);
+    font-weight: 600;
+  }
+
+  @media (max-width: 900px) {
+    .contact {
+      padding-block: 56px;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 32px;
+    }
+    .form {
+      grid-template-columns: 1fr;
+      padding: 24px 20px;
+    }
+    .form > .half {
+      grid-column: 1 / -1;
+    }
+    button {
+      justify-self: stretch;
+    }
+  }
+</style>

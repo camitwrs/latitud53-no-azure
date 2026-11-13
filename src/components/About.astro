@@ -1,0 +1,105 @@
+---
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const t = ui[Astro.props.locale].about;
+---
+
+<section id="nosotros" class="about" aria-labelledby="nosotros-titulo">
+  <div class="container grid">
+    <header class="head" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2 id="nosotros-titulo">{t.title}</h2>
+    </header>
+    <p class="text" data-reveal style="--delay:0.1s">{t.text}</p>
+  </div>
+  <!-- El paralelo 53° cruza la sección: se dibuja de izquierda a derecha al aparecer. Decorativo. -->
+  <div class="container">
+    <div class="parallel" data-reveal aria-hidden="true">
+      <span class="line"></span>
+      <span class="tag">53° S</span>
+    </div>
+  </div>
+</section>
+
+<style>
+  .about {
+    background: var(--page-bg);
+    padding-block: 96px;
+  }
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 640px) minmax(0, 560px);
+    justify-content: space-between;
+    align-items: center;
+    gap: 48px;
+  }
+  .head {
+    display: grid;
+    gap: 24px;
+  }
+  .eyebrow {
+    color: var(--eyebrow-l);
+  }
+  h2 {
+    font-size: clamp(2rem, 4.2vw, 3.25rem);
+  }
+  .text {
+    color: var(--page-muted);
+    font-size: clamp(1rem, 1.6vw, 1.25rem);
+    line-height: 1.55;
+  }
+
+  .parallel {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-top: 64px;
+  }
+  .line {
+    flex: 1;
+    height: 3px;
+    border-radius: 3px;
+    background: var(--accent);
+    transform-origin: left;
+  }
+  .tag {
+    color: var(--eyebrow-l);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.125rem;
+    letter-spacing: var(--tracking-display);
+  }
+  /* Con animaciones: la línea crece hacia la derecha y la etiqueta aparece al final. */
+  :global(.reveal) .parallel .line {
+    transition: transform 1.4s cubic-bezier(0.65, 0, 0.35, 1) 0.2s;
+  }
+  :global(.reveal) .parallel:not(.in) .line {
+    transform: scaleX(0);
+  }
+  :global(.reveal) .parallel .tag {
+    transition: opacity 0.4s 1.4s;
+  }
+  :global(.reveal) .parallel:not(.in) .tag {
+    opacity: 0;
+  }
+
+  @media (max-width: 900px) {
+    .about {
+      padding-block: 56px;
+    }
+    .parallel {
+      margin-top: 40px;
+    }
+    .grid {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .head {
+      gap: 20px;
+    }
+  }
+</style>

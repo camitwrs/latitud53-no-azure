@@ -1,0 +1,4 @@
+User-agent: *
+Allow: /
+
+Sitemap: https://latitud53.cl/sitemap-index.xml

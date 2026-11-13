@@ -1,0 +1,221 @@
+---
+import ScreenMock from "./ScreenMock.astro";
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const t = ui[Astro.props.locale].cases;
+---
+
+<section id="productos" class="cases" aria-labelledby="productos-titulo">
+  <div class="container">
+    <header class="head" data-reveal>
+      <p class="eyebrow">{t.eyebrow}</p>
+      <h2 id="productos-titulo">{t.title}</h2>
+    </header>
+
+    <ul class="list">
+      {
+        t.items.map((item, i) => (
+          <li class:list={["case", { flip: i % 2 === 1 }]} data-reveal>
+            <article aria-labelledby={`caso-${item.id}`}>
+              <div class="text">
+                <p class="tag">{item.tag}</p>
+                <div class="name">
+                  <h3 id={`caso-${item.id}`}>{item.title}</h3>
+                  {"status" in item && <span class="status">{item.status}</span>}
+                </div>
+                <p class="desc">{item.desc}</p>
+                <ul class="chips">
+                  {item.chips.map((c) => <li>{c}</li>)}
+                </ul>
+              </div>
+              <div class="shot">
+                <ScreenMock />
+              </div>
+            </article>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="next" data-reveal>
+      <p>
+        <strong>{t.next.title}</strong>{" "}{t.next.desc}
+      </p>
+      <a href="#contacto">{t.next.cta}</a>
+    </div>
+  </div>
+</section>
+
+<style>
+  .cases {
+    background: var(--page-bg);
+    padding-block: 96px;
+  }
+  .head {
+    display: grid;
+    gap: 12px;
+    max-width: 900px;
+    margin-bottom: 72px;
+  }
+  .eyebrow {
+    color: var(--eyebrow-l);
+  }
+  h2 {
+    font-size: clamp(2rem, 3.6vw, 2.75rem);
+    line-height: 1.1;
+  }
+  .list {
+    display: grid;
+    gap: 96px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  article {
+    display: grid;
+    grid-template-columns: minmax(0, 480px) minmax(0, 640px);
+    justify-content: space-between;
+    align-items: center;
+    gap: 80px;
+  }
+  /* Casos invertidos: la pantalla va a la izquierda, así que las columnas también se invierten (pantalla 640, texto 480). */
+  .flip article {
+    grid-template-columns: minmax(0, 640px) minmax(0, 480px);
+  }
+  .flip .text {
+    order: 2;
+  }
+  .text {
+    display: grid;
+    gap: 18px;
+  }
+  .tag {
+    color: var(--page-muted);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+  .name {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+  }
+  h3 {
+    font-size: clamp(2.25rem, 4vw, 3rem);
+  }
+  /* Estado del producto cuando todavía no está en operación (por ejemplo "En desarrollo"). */
+  .status {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--accent) 14%, transparent);
+    color: var(--eyebrow-l);
+    font-weight: 600;
+    font-size: 0.8125rem;
+  }
+  .status::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: status-pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes status-pulse {
+    50% {
+      opacity: 0.35;
+    }
+  }
+  .desc {
+    color: var(--page-muted);
+    font-size: 1.125rem;
+  }
+  .chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .chips li {
+    transition: background 0.2s, color 0.2s;
+    padding: 8px 14px;
+    border: 1px solid var(--eyebrow-l);
+    border-radius: 999px;
+    color: var(--eyebrow-l);
+    font-weight: 500;
+    font-size: 0.8125rem;
+  }
+  .shot {
+    border-radius: var(--radius);
+    transition: transform 0.3s, box-shadow 0.3s;
+  }
+  .case:hover .shot {
+    transform: translateY(-4px);
+    box-shadow: 0 18px 40px rgb(11 31 51 / 0.18);
+  }
+  .case:hover .chips li {
+    background: var(--eyebrow-l);
+    color: var(--card);
+  }
+  .next {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 24px;
+    margin-top: 96px;
+    padding-top: 28px;
+    border-top: 1px solid var(--line);
+  }
+  .next p {
+    max-width: 800px;
+    font-family: var(--font-display);
+    font-size: clamp(1.375rem, 2.4vw, 1.75rem);
+    letter-spacing: var(--tracking-display);
+    line-height: 1.2;
+  }
+  .next strong {
+    font-weight: 700;
+  }
+  .next a {
+    flex: none;
+    color: var(--eyebrow-l);
+    font-weight: 700;
+    font-size: 1.125rem;
+    text-underline-offset: 4px;
+  }
+
+  @media (max-width: 900px) {
+    .cases {
+      padding-block: 56px;
+    }
+    .head {
+      margin-bottom: 40px;
+    }
+    .list {
+      gap: 48px;
+    }
+    article {
+      grid-template-columns: 1fr;
+      gap: 20px;
+    }
+    .text,
+    .flip .text {
+      order: 2;
+    }
+    .next {
+      flex-direction: column;
+      align-items: flex-start;
+      margin-top: 48px;
+    }
+  }
+</style>

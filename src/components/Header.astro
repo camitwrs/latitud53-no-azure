@@ -1,0 +1,151 @@
+---
+import Logo from "./Logo.astro";
+import ThemeToggle from "./ThemeToggle.astro";
+import { ui, homePath, LOCALES, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+  alternates?: Record<Locale, string>; // ruta de esta página en cada idioma
+}
+
+const { locale, alternates = { es: homePath("es"), en: homePath("en") } } = Astro.props;
+const t = ui[locale];
+const home = homePath(locale);
+---
+
+<header class="header" data-header>
+  <div class="container bar">
+    <a class="brand" href={home} aria-label="Latitud53">
+      <Logo size={32} />
+    </a>
+
+    <nav class="nav" aria-label={t.navLabel}>
+      <ul>
+        {t.nav.map((item) => <li><a href={`${home}#${item.id}`}>{item.label}</a></li>)}
+      </ul>
+    </nav>
+
+    <div class="actions">
+      <ul class="lang" aria-label={t.langLabel}>
+        {
+          LOCALES.map((l) => (
+            <li>
+              <a href={alternates[l]} hreflang={ui[l].htmlLang} lang={ui[l].htmlLang} aria-current={l === locale ? "page" : undefined}>
+                {l.toUpperCase()}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <ThemeToggle locale={locale} />
+      <a class="cta" href={`${home}#contacto`}>{t.hero.cta}</a>
+    </div>
+  </div>
+</header>
+
+<script>
+  // Menú fijo: al bajar, una sombra lo separa del contenido.
+  const header = document.querySelector<HTMLElement>("[data-header]");
+  const onScroll = () => header?.classList.toggle("scrolled", window.scrollY > 8);
+  window.addEventListener("scroll", onScroll, { passive: true });
+  onScroll();
+</script>
+
+<style>
+  .header {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    background: var(--hero-bg);
+    color: var(--hero-ink);
+    transition: box-shadow 0.25s;
+  }
+  .header.scrolled {
+    box-shadow:
+      0 1px 0 var(--line),
+      0 8px 24px rgb(11 31 51 / 0.08);
+  }
+  .bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    padding-block: 20px;
+  }
+  .brand {
+    display: inline-flex;
+    text-decoration: none;
+  }
+  ul {
+    display: flex;
+    align-items: center;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .nav ul {
+    gap: 36px;
+  }
+  /* Subrayado que crece desde la izquierda al pasar el mouse. */
+  .nav a {
+    text-decoration: none;
+    background: linear-gradient(currentColor, currentColor) left bottom / 0 1.5px no-repeat;
+    padding-bottom: 2px;
+    transition: color 0.2s, background-size 0.25s;
+  }
+  .nav a:hover {
+    color: var(--accent);
+    background-size: 100% 1.5px;
+  }
+  .actions {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+  }
+  .lang {
+    gap: 4px;
+    font-weight: 500;
+    font-size: 0.875rem;
+  }
+  .lang li + li::before {
+    content: "|";
+    margin-right: 4px;
+    color: var(--hero-muted);
+  }
+  .lang a {
+    color: var(--hero-muted);
+    text-decoration: none;
+  }
+  .lang a[aria-current="page"] {
+    color: var(--hero-ink);
+    font-weight: 700;
+  }
+  .cta {
+    padding: 13px 24px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 700;
+    font-size: 0.875rem;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .cta:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 18px color-mix(in srgb, var(--accent) 35%, transparent);
+  }
+
+  /* Móvil: logo, idioma y modo; el botón de contacto queda en el hero. */
+  @media (max-width: 900px) {
+    .nav,
+    .cta {
+      display: none;
+    }
+    .bar {
+      padding-block: 16px;
+    }
+    .actions {
+      gap: 12px;
+    }
+  }
+</style>

@@ -1,0 +1,23 @@
+---
+import Base from "../layouts/Base.astro";
+import Header from "../components/Header.astro";
+---
+
+<Base locale="es" title="Página no encontrada | Latitud53" noindex>
+  <Header locale="es" />
+  <main id="contenido" class="container">
+    <h1>Página no encontrada.</h1>
+    <p>La página que buscas no existe. <a href="/">Volver al inicio</a> · <a href="/en/" lang="en">Back to home</a></p>
+  </main>
+</Base>
+
+<style>
+  main {
+    display: grid;
+    gap: 16px;
+    padding-block: 96px;
+  }
+  h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+  }
+</style>

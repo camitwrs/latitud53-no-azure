@@ -1,0 +1,133 @@
+---
+import "@fontsource/space-grotesk/700.css";
+import "@fontsource-variable/inter";
+import "../styles/global.css";
+import { ui, homePath, LOCALES, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+  title?: string;
+  description?: string;
+  noindex?: boolean;
+  alternates?: Record<Locale, string>; // ruta de esta misma página en cada idioma
+}
+
+const { locale, title, description, noindex = false, alternates = { es: homePath("es"), en: homePath("en") } } = Astro.props;
+const t = ui[locale];
+const site = Astro.site ?? new URL("https://latitud53.cl");
+const pageTitle = title ?? t.seo.title;
+const pageDescription = description ?? t.seo.description;
+const canonical = new URL(Astro.url.pathname, site).href;
+
+const ogImage = new URL(`/og-${locale}.png`, site).href;
+
+// Datos estructurados: solo lo confirmado. Falta agregar contactPoint y sameAs cuando existan correo y redes reales.
+const orgId = new URL("/#organizacion", site).href;
+const jsonLd = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": orgId,
+      name: "Latitud53",
+      url: site.href,
+      logo: { "@type": "ImageObject", url: new URL("/logo-512.png", site).href, width: 512, height: 512 },
+      description: pageDescription,
+      areaServed: "CL",
+    },
+    {
+      "@type": "WebSite",
+      "@id": new URL("/#sitio", site).href,
+      name: "Latitud53",
+      url: site.href,
+      inLanguage: LOCALES.map((l) => ui[l].htmlLang),
+      publisher: { "@id": orgId },
+    },
+  ],
+};
+---
+
+<!doctype html>
+<html lang={t.htmlLang}>
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>{pageTitle}</title>
+    <meta name="description" content={pageDescription} />
+    {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {LOCALES.map((l) => <link rel="alternate" hreflang={ui[l].htmlLang} href={new URL(alternates[l], site).href} />)}
+    <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, site).href} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <link rel="sitemap" href="/sitemap-index.xml" />
+    <meta name="theme-color" content="#f3f8fb" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#0b1f33" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Latitud53" />
+    <meta property="og:title" content={pageTitle} />
+    <meta property="og:description" content={pageDescription} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:locale" content={t.seo.ogLocale} />
+    {LOCALES.filter((l) => l !== locale).map((l) => <meta property="og:locale:alternate" content={ui[l].seo.ogLocale} />)}
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content={pageTitle} />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content={pageTitle} />
+    <meta name="twitter:description" content={pageDescription} />
+    <meta name="twitter:image" content={ogImage} />
+
+    <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
+
+    <!-- Aplica el modo elegido antes de pintar, para que no parpadee. Sin elección, sigue al sistema. -->
+    <script is:inline>
+      try {
+        const saved = localStorage.getItem("theme");
+        if (saved === "light" || saved === "dark") document.documentElement.dataset.theme = saved;
+      } catch (e) {}
+      if (!matchMedia("(prefers-reduced-motion: reduce)").matches) document.documentElement.classList.add("reveal");
+    </script>
+  </head>
+  <body>
+    <a class="skip" href="#contenido">{t.skip}</a>
+    <slot />
+    <script>
+      // Marca .in cada elemento [data-reveal] cuando entra en pantalla (una sola vez).
+      if (document.documentElement.classList.contains("reveal")) {
+        const io = new IntersectionObserver(
+          (entries) => {
+            for (const e of entries) {
+              if (e.isIntersecting) {
+                e.target.classList.add("in");
+                io.unobserve(e.target);
+              }
+            }
+          },
+          { rootMargin: "0px 0px -10% 0px" },
+        );
+        document.querySelectorAll("[data-reveal]").forEach((el) => io.observe(el));
+      }
+    </script>
+  </body>
+</html>
+
+<style>
+  .skip {
+    position: absolute;
+    left: 16px;
+    top: -48px;
+    z-index: 10;
+    padding: 10px 16px;
+    border-radius: var(--radius);
+    background: var(--accent);
+    color: var(--on-accent);
+    font-weight: 600;
+    text-decoration: none;
+  }
+  .skip:focus {
+    top: 16px;
+  }
+</style>

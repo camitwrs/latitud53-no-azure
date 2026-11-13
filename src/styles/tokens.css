@@ -1,0 +1,84 @@
+/* Dirección Austral: colores de la landing en modo claro y oscuro (MODES.austral del plugin de Figma)
+   y del logo (lp.light / lp.dark). El modo sigue al sistema salvo que el usuario elija uno: data-theme en <html>. */
+
+:root {
+  color-scheme: light;
+
+  --hero-bg: #e4f0f7;
+  --hero-ink: #0b1f33;
+  --hero-muted: #41586b;
+  --accent: #0b6e8e;
+  --on-accent: #ffffff;
+  --eyebrow: #0b6e8e;
+  --page-bg: #f3f8fb;
+  --page-ink: #0b1f33;
+  --page-muted: #5b6b7a;
+  --card: #ffffff;
+  --line: #cfe6f2;
+  --eyebrow-l: #0b6e8e;
+  --footer-bg: #0b1f33;
+
+  --logo-fg: #0b1f33;
+  --logo-accent: #0f8db3;
+  --logo-num: #0f8db3;
+  --logo-gap: var(--hero-bg); /* contorno del punto del logo: el fondo donde va el logo */
+
+  --font-display: "Space Grotesk", system-ui, sans-serif;
+  --font-body: "Inter Variable", system-ui, sans-serif;
+  --tracking-display: -0.02em;
+  --radius: 8px;
+  --max: 1280px;
+  --gutter: clamp(20px, 5.5vw, 80px);
+}
+
+/* Logo y textos del footer: siempre sobre fondo oscuro. */
+:root {
+  --footer-ink: #f3f8fb;
+  --footer-accent: #35c2e8;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --hero-bg: #0b1f33;
+    --hero-ink: #f3f8fb;
+    --hero-muted: #9db4c6;
+    --accent: #35c2e8;
+    --on-accent: #0b1f33;
+    --eyebrow: #35c2e8;
+    --page-bg: #0f2740;
+    --page-ink: #f3f8fb;
+    --page-muted: #9db4c6;
+    --card: #143049;
+    --line: #24465f;
+    --eyebrow-l: #35c2e8;
+    --footer-bg: #071524;
+
+    --logo-fg: #f3f8fb;
+    --logo-accent: #35c2e8;
+    --logo-num: #35c2e8;
+  }
+}
+
+:root[data-theme="dark"] {
+  color-scheme: dark;
+
+  --hero-bg: #0b1f33;
+  --hero-ink: #f3f8fb;
+  --hero-muted: #9db4c6;
+  --accent: #35c2e8;
+  --on-accent: #0b1f33;
+  --eyebrow: #35c2e8;
+  --page-bg: #0f2740;
+  --page-ink: #f3f8fb;
+  --page-muted: #9db4c6;
+  --card: #143049;
+  --line: #24465f;
+  --eyebrow-l: #35c2e8;
+  --footer-bg: #071524;
+
+  --logo-fg: #f3f8fb;
+  --logo-accent: #35c2e8;
+  --logo-num: #35c2e8;
+}

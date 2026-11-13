@@ -1,0 +1,101 @@
+---
+import { ui, type Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const t = ui[Astro.props.locale];
+---
+
+<section class="stats" aria-label={t.statsLabel}>
+  <dl class="container list">
+    {
+      t.stats.map(([value, label], i) => (
+        <div class="item" data-reveal style={`--delay:${i * 0.1}s`}>
+          <dt>{label}</dt>
+          <dd data-count={value.startsWith("53") ? "53" : undefined}>{value}</dd>
+        </div>
+      ))
+    }
+  </dl>
+</section>
+
+<script>
+  // El "53° S" cuenta de 0 a 53 al entrar en pantalla (solo con animaciones permitidas; el HTML ya trae el valor final).
+  if (document.documentElement.classList.contains("reveal")) {
+    const ease = (t: number) => 1 - Math.pow(1 - t, 3);
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        if (!e.isIntersecting) continue;
+        io.unobserve(e.target);
+        const el = e.target as HTMLElement;
+        const to = Number(el.dataset.count), suffix = el.textContent!.replace(/^\d+/, "");
+        const start = performance.now();
+        const step = (now: number) => {
+          const t = Math.min(1, (now - start) / 1100);
+          el.textContent = Math.round(to * ease(t)) + suffix;
+          if (t < 1) requestAnimationFrame(step);
+        };
+        requestAnimationFrame(step);
+      }
+    });
+    document.querySelectorAll("[data-count]").forEach((el) => io.observe(el));
+  }
+</script>
+
+<style>
+  .stats {
+    background: var(--card);
+  }
+  .list {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 32px;
+    margin-block: 0;
+    padding-block: 64px;
+  }
+  /* El valor va arriba de su etiqueta (en el HTML el <dt> va primero). En escritorio cada cifra va centrada
+     en su tercio, así el bloque queda simétrico. */
+  .item {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    text-align: center;
+  }
+  dd {
+    font-variant-numeric: tabular-nums;
+    order: -1;
+    margin: 0;
+    color: var(--eyebrow-l);
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: clamp(2.75rem, 5vw, 4.5rem);
+    letter-spacing: var(--tracking-display);
+    line-height: 1;
+  }
+  dt {
+    max-width: 300px;
+    color: var(--page-muted);
+  }
+
+  @media (max-width: 900px) {
+    .list {
+      grid-template-columns: 1fr;
+      gap: 0;
+      padding-block: 40px;
+    }
+    .item {
+      flex-direction: row;
+      align-items: center;
+      text-align: left;
+      gap: 16px;
+      padding-block: 16px;
+      border-bottom: 1px solid var(--line);
+    }
+    dd {
+      min-width: 130px;
+    }
+  }
+</style>

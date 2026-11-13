@@ -1,0 +1,104 @@
+---
+// Maqueta abstracta de una pantalla de software (solo formas). Reemplazar por capturas reales cuando haya autorización.
+// Con animaciones permitidas se ve "viva": las barras se actualizan y la selección del menú lateral cambia.
+const W = 640, H = 380;
+const gx = 160, gw = Math.floor((W - gx - 20 - 32) / 3);
+const cw = W - gx - 20, ch = H - 156 - 20;
+const bars = [0.35, 0.5, 0.42, 0.65, 0.55, 0.78, 0.7, 0.9, 0.82];
+const bw = Math.floor((cw - 32) / bars.length) - 10;
+const barH = ch - 32; // cada barra mide el alto total y se escala con --v (0 a 1) desde abajo
+---
+
+<svg class="mock" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-mock>
+  <rect width={W} height={H} rx="8" class="win"></rect>
+  <rect width={W} height="40" class="ink" opacity="0.08"></rect>
+  {[16, 32, 48].map((x) => <rect x={x} y="15" width="10" height="10" rx="5" class="ink" opacity="0.3" />)}
+  <rect y="40" width="140" height={H - 40} class="ink" opacity="0.05"></rect>
+  {[0, 1, 2, 3, 4].map((i) => <rect x="16" y={66 + i * 28} width="90" height="10" rx="5" class="ink" opacity="0.22" />)}
+  <rect class="acc sel" x="16" y="66" width="108" height="10" rx="5"></rect>
+  {
+    [0, 1, 2].map((i) => {
+      const x = gx + i * (gw + 16);
+      return (
+        <g>
+          <rect x={x} y="60" width={gw} height="76" rx="8" class="ink" opacity="0.08" />
+          <rect x={x + 14} y="76" width={Math.floor(gw * 0.4)} height="8" rx="4" class="ink" opacity="0.3" />
+          <rect x={x + 14} y="98" width={Math.floor(gw * 0.6)} height="18" rx="4" class={i === 0 ? "acc" : "ink"} opacity={i === 0 ? 1 : 0.6} />
+        </g>
+      );
+    })
+  }
+  <rect x={gx} y="156" width={cw} height={ch} rx="8" class="ink" opacity="0.06"></rect>
+  {
+    bars.map((v, i) => {
+      const last = i >= bars.length - 3;
+      return (
+        <rect
+          class={last ? "acc bar" : "ink bar"}
+          x={gx + 16 + i * (bw + 10)}
+          y={156 + 16}
+          width={bw}
+          height={barH}
+          rx="3"
+          opacity={last ? 1 : 0.25}
+          style={`--v:${v}`}
+          data-base={v}
+        />
+      );
+    })
+  }
+</svg>
+
+<script>
+  // Cada 2,6 s, mientras la pantalla está a la vista: las barras cambian de alto (manteniendo la tendencia) y la
+  // selección del menú salta a otro ítem. Solo con animaciones permitidas (html.reveal).
+  if (document.documentElement.classList.contains("reveal")) {
+    const tick = (svg: SVGSVGElement) => {
+      svg.querySelectorAll<SVGRectElement>(".bar").forEach((bar) => {
+        const base = Number(bar.dataset.base);
+        bar.style.setProperty("--v", String(Math.min(1, base * (0.75 + Math.random() * 0.4))));
+      });
+      const sel = svg.querySelector<SVGRectElement>(".sel")!;
+      sel.style.transform = `translateY(${Math.floor(Math.random() * 5) * 28}px)`;
+    };
+    const timers = new Map<Element, number>();
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) {
+        const svg = e.target as SVGSVGElement;
+        if (e.isIntersecting && !timers.has(svg)) {
+          timers.set(svg, window.setInterval(() => !document.hidden && tick(svg), 2600));
+        } else if (!e.isIntersecting && timers.has(svg)) {
+          clearInterval(timers.get(svg));
+          timers.delete(svg);
+        }
+      }
+    });
+    document.querySelectorAll("[data-mock]").forEach((svg) => io.observe(svg));
+  }
+</script>
+
+<style>
+  .mock {
+    width: 100%;
+    height: auto;
+    border-radius: var(--radius);
+  }
+  .win {
+    fill: var(--footer-bg);
+  }
+  .ink {
+    fill: #f3f8fb;
+  }
+  .acc {
+    fill: #35c2e8;
+  }
+  .bar {
+    transform: scaleY(var(--v));
+    transform-box: fill-box;
+    transform-origin: bottom;
+    transition: transform 0.9s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  .sel {
+    transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+</style>

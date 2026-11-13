@@ -1,0 +1,84 @@
+---
+// Página de la política de privacidad (mismo contenido en ES y EN, desde src/i18n/privacy.ts).
+import Base from "../layouts/Base.astro";
+import Header from "./Header.astro";
+import Footer from "./Footer.astro";
+import { COMPANY, privacy, privacyPath } from "../i18n/privacy";
+import type { Locale } from "../i18n/ui";
+
+interface Props {
+  locale: Locale;
+}
+
+const { locale } = Astro.props;
+const p = privacy[locale];
+const alternates = { es: privacyPath("es"), en: privacyPath("en") };
+// {email} → enlace al correo de contacto. El resto del texto se escapa normalmente.
+const parts = (text: string) => text.split("{email}");
+---
+
+<Base locale={locale} title={`${p.title} | Latitud53`} description={p.description} alternates={alternates}>
+  <Header locale={locale} alternates={alternates} />
+  <main id="contenido" class="container policy">
+    <header class="head">
+      <h1>{p.title}</h1>
+      <p class="updated">{p.updated}</p>
+    </header>
+    {
+      p.sections.map((s) => (
+        <section>
+          <h2>{s.h}</h2>
+          {s.p.map((text) => (
+            <p>
+              {parts(text).map((chunk, i) => (
+                <>
+                  {i > 0 && <a href={`mailto:${COMPANY.email}`}>{COMPANY.email}</a>}
+                  {chunk}
+                </>
+              ))}
+            </p>
+          ))}
+        </section>
+      ))
+    }
+  </main>
+  <Footer locale={locale} />
+</Base>
+
+<style>
+  .policy {
+    max-width: calc(760px + 2 * var(--gutter));
+    padding-block: 72px 96px;
+  }
+  .head {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 48px;
+    padding-bottom: 28px;
+    border-bottom: 1px solid var(--line);
+  }
+  h1 {
+    font-size: clamp(2.25rem, 5vw, 3.25rem);
+  }
+  .updated {
+    color: var(--page-muted);
+    font-size: 0.9375rem;
+  }
+  section {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 36px;
+  }
+  h2 {
+    font-size: 1.375rem;
+    letter-spacing: -0.01em;
+  }
+  p {
+    color: var(--page-muted);
+    line-height: 1.65;
+  }
+  a {
+    color: var(--eyebrow-l);
+    text-underline-offset: 3px;
+  }
+</style>
