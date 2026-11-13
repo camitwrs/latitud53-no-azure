@@ -33,7 +33,7 @@ const t = ui[Astro.props.locale].cases;
                 </ul>
               </div>
               <div class="shot">
-                <ScreenMock />
+                <ScreenMock building={"status" in item ? item.status : undefined} />
               </div>
             </article>
           </li>
@@ -155,13 +155,13 @@ const t = ui[Astro.props.locale].cases;
     font-weight: 500;
     font-size: 0.8125rem;
   }
+  /* drop-shadow sigue la forma del dibujo: en la pantalla con grúa no ensombrece el espacio vacío alrededor. */
   .shot {
-    border-radius: var(--radius);
-    transition: transform 0.3s, box-shadow 0.3s;
+    transition: transform 0.3s, filter 0.3s;
   }
   .case:hover .shot {
     transform: translateY(-4px);
-    box-shadow: 0 18px 40px rgb(11 31 51 / 0.18);
+    filter: drop-shadow(0 18px 20px rgb(11 31 51 / 0.18));
   }
   .case:hover .chips li {
     background: var(--eyebrow-l);

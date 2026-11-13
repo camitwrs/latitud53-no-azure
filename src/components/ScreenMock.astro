@@ -1,6 +1,16 @@
 ---
 // Maqueta abstracta de una pantalla de software (solo formas). Reemplazar por capturas reales cuando haya autorización.
 // Con animaciones permitidas se ve "viva": las barras se actualizan y la selección del menú lateral cambia.
+// building: variante "en construcción" para productos en desarrollo (recibe el texto del estado, p. ej. "En desarrollo").
+// Una grúa baja a su lugar la tarjeta que falta, una cinta de obra cruza la pantalla y lo pendiente va en contornos
+// punteados sobre una cuadrícula de plano. Todo en la paleta de la landing.
+interface Props {
+  building?: string;
+}
+const { building } = Astro.props;
+const uid = Math.random().toString(36).slice(2, 8); // ids únicos para patrones y recorte
+const grid = `plano-${uid}`, stripes = `cinta-${uid}`, clip = `ventana-${uid}`;
+const BUILT = 4; // barras ya construidas; la siguiente es la que "se está construyendo"
 const W = 640, H = 380;
 const gx = 160, gw = Math.floor((W - gx - 20 - 32) / 3);
 const cw = W - gx - 20, ch = H - 156 - 20;
@@ -9,6 +19,79 @@ const bw = Math.floor((cw - 32) / bars.length) - 10;
 const barH = ch - 32; // cada barra mide el alto total y se escala con --v (0 a 1) desde abajo
 ---
 
+{building ? (
+<svg class="mock building" viewBox={`0 -90 720 ${H + 90}`} aria-hidden="true">
+  <defs>
+    <pattern id={grid} width="20" height="20" patternUnits="userSpaceOnUse">
+      <path d="M20 0H0V20" class="grid-line" />
+    </pattern>
+    <pattern id={stripes} width="24" height="24" patternUnits="userSpaceOnUse" patternTransform="rotate(45)">
+      <rect width="12" height="24" fill="#35c2e8" />
+      <rect x="12" width="12" height="24" fill="#0b1f33" />
+    </pattern>
+    <clipPath id={clip}>
+      <rect width={W} height={H} rx="8" />
+    </clipPath>
+  </defs>
+  <rect width={W} height={H} rx="8" class="win"></rect>
+  <rect y="40" width={W} height={H - 40} fill={`url(#${grid})`}></rect>
+  <rect width={W} height="40" class="ink" opacity="0.08"></rect>
+  {[16, 32, 48].map((x) => <rect x={x} y="15" width="10" height="10" rx="5" class="ink" opacity="0.3" />)}
+  <rect x="8" y="48" width="128" height={H - 56} rx="6" class="ghost" />
+  <rect class="acc" x="16" y="66" width="108" height="10" rx="5"></rect>
+  {[1, 2, 3, 4].map((i) => <rect x="16" y={66 + i * 28} width="90" height="10" rx="5" class="ghost" />)}
+  {
+    [0, 1, 2].map((i) => {
+      const x = gx + i * (gw + 16);
+      return i === 0 ? (
+        <g>
+          <rect x={x} y="60" width={gw} height="76" rx="8" class="ink" opacity="0.08" />
+          <rect x={x + 14} y="76" width={Math.floor(gw * 0.4)} height="8" rx="4" class="ink" opacity="0.3" />
+          <rect x={x + 14} y="98" width={Math.floor(gw * 0.6)} height="18" rx="4" class="acc" />
+        </g>
+      ) : (
+        <rect x={x} y="60" width={gw} height="76" rx="8" class="ghost" />
+      );
+    })
+  }
+  <rect x={gx} y="156" width={cw} height={ch} rx="8" class="ghost" />
+  {
+    bars.map((v, i) => {
+      const x = gx + 16 + i * (bw + 10), h = Math.floor(barH * v), y = 156 + 16 + barH - h;
+      if (i < BUILT) return <rect class="ink bar" x={x} y={156 + 16} width={bw} height={barH} rx="3" opacity="0.3" style={`--v:${v}`} />;
+      if (i === BUILT) return <rect class="acc next" x={x} y={y} width={bw} height={h} rx="3" />;
+      return <rect class="ghost" x={x} y={y} width={bw} height={h} rx="3" />;
+    })
+  }
+  <!-- Cinta de obra cruzando la pantalla, recortada a la ventana. -->
+  <g clip-path={`url(#${clip})`}>
+    <g transform="rotate(-7 320 318)">
+      <rect x="-60" y="300" width="760" height="36" fill={`url(#${stripes})`} />
+      <rect x="215" y="303" width="210" height="30" rx="4" class="plate" />
+      <text x="320" y="323" text-anchor="middle" class="tape-label">{building.toUpperCase()}</text>
+    </g>
+  </g>
+  <!-- Grúa torre al costado de la ventana: baja la tarjeta que falta hacia su lugar (la tercera). -->
+  <g class="crane">
+    <path d="M655 380V-34M675 380V-34" />
+    <path d={"M655 380" + Array.from({ length: 17 }, (_, k) => ` L${k % 2 ? 655 : 675} ${356 - k * 24}`).join("")} />
+    <path d="M380 -58H705M380 -34H705" />
+    <path d={"M380 -34" + Array.from({ length: 12 }, (_, k) => ` L${406 + k * 26} ${k % 2 ? -34 : -58}`).join("")} />
+    <path d="M655 -34L665 -86L675 -34M665 -86L380 -58M665 -86L705 -58" />
+    <path d="M630 380H700" />
+  </g>
+  <rect x="686" y="-30" width="22" height="22" rx="2" class="crane-solid" />
+  <g class="load">
+    <path d="M547 -60V0M541 0h12v6a6 6 0 0 1-12 0" class="cable" />
+    <g transform="translate(476 12)">
+      <rect width={gw} height="70" rx="8" class="win" stroke="#35c2e8" stroke-width="1.5" />
+      <rect x="14" y="16" width={Math.floor(gw * 0.4)} height="8" rx="4" class="ink" opacity="0.3" />
+      <rect x="14" y="36" width={Math.floor(gw * 0.6)} height="18" rx="4" class="acc" />
+    </g>
+  </g>
+  <rect x="537" y="-38" width="20" height="10" rx="2" class="crane-solid" />
+</svg>
+) : (
 <svg class="mock" viewBox={`0 0 ${W} ${H}`} aria-hidden="true" data-mock>
   <rect width={W} height={H} rx="8" class="win"></rect>
   <rect width={W} height="40" class="ink" opacity="0.08"></rect>
@@ -48,6 +131,7 @@ const barH = ch - 32; // cada barra mide el alto total y se escala con --v (0 a 
     })
   }
 </svg>
+)}
 
 <script>
   // Cada 2,6 s, mientras la pantalla está a la vista: las barras cambian de alto (manteniendo la tendencia) y la
@@ -100,5 +184,69 @@ const barH = ch - 32; // cada barra mide el alto total y se escala con --v (0 a 
   }
   .sel {
     transition: transform 0.5s cubic-bezier(0.2, 0.7, 0.2, 1);
+  }
+  /* En construcción: cuadrícula de plano, contornos punteados que avanzan, la pieza en curso que late, la grúa en el
+     color del texto de la página (se ve en modo claro y oscuro) y la carga que se mece al bajar. */
+  .crane {
+    fill: none;
+    stroke: var(--page-ink);
+    stroke-opacity: 0.7;
+    stroke-width: 2.5;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+  }
+  .crane-solid {
+    fill: var(--page-ink);
+    fill-opacity: 0.7;
+  }
+  .cable {
+    fill: none;
+    stroke: var(--page-ink);
+    stroke-opacity: 0.7;
+    stroke-width: 2;
+  }
+  .load {
+    animation: lower 3.2s ease-in-out infinite alternate;
+  }
+  .plate {
+    fill: #0b1f33;
+    stroke: #35c2e8;
+    stroke-width: 1.5;
+  }
+  .tape-label {
+    fill: #35c2e8;
+    font: 700 14px var(--font-display);
+    letter-spacing: 2px;
+  }
+  @keyframes lower {
+    to {
+      transform: translateY(14px);
+    }
+  }
+  .grid-line {
+    fill: none;
+    stroke: #f3f8fb;
+    stroke-opacity: 0.07;
+  }
+  .ghost {
+    fill: none;
+    stroke: #f3f8fb;
+    stroke-opacity: 0.35;
+    stroke-width: 1.5;
+    stroke-dasharray: 6 5;
+    animation: ants 2.4s linear infinite;
+  }
+  .next {
+    animation: building 1.6s ease-in-out infinite;
+  }
+  @keyframes ants {
+    to {
+      stroke-dashoffset: -22;
+    }
+  }
+  @keyframes building {
+    50% {
+      opacity: 0.35;
+    }
   }
 </style>
