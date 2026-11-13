@@ -239,9 +239,10 @@ const t = ui[Astro.props.locale].cases;
       grid-template-columns: 1fr;
       gap: 20px;
     }
+    /* En móvil, primero el texto del producto y debajo su pantalla, así cada pantalla queda bajo su nombre. */
     .text,
     .flip .text {
-      order: 2;
+      order: 0;
     }
     .next {
       flex-direction: column;
