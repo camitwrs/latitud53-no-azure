@@ -148,4 +148,16 @@ const home = homePath(locale);
       gap: 12px;
     }
   }
+  /* Pantallas muy angostas (~320 px): logo, idioma e interruptor un poco más chicos para que quepan sin desbordar. */
+  @media (max-width: 374px) {
+    .brand {
+      --logo-size: 26px;
+    }
+    .bar {
+      gap: 12px;
+    }
+    .actions {
+      gap: 8px;
+    }
+  }
 </style>

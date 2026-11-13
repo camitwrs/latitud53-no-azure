@@ -11,7 +11,7 @@ interface Props {
 const { size = 32, label } = Astro.props;
 ---
 
-<span class="logo" style={`--size:${size}px`} role={label ? "img" : undefined} aria-label={label}>
+<span class="logo" style={`--size:var(--logo-size, ${size}px)`} role={label ? "img" : undefined} aria-label={label}>
   <span class="mark" set:html={logoSvg({ small: size <= 48 })} />
   <span class="word" aria-hidden={label ? "true" : undefined}>Latitud<span class="num">53</span></span>
 </span>
