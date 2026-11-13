@@ -1,5 +1,5 @@
 ---
-// Interruptor sol / luna. Sin elección guardada, marca el modo del sistema; al elegir, lo guarda en localStorage.
+// Interruptor sol / luna. Sin elección guardada el sitio está en modo claro; al elegir, lo guarda en localStorage.
 import { ui, type Locale } from "../i18n/ui";
 
 interface Props {
@@ -25,9 +25,8 @@ const t = ui[locale].theme;
 </div>
 
 <script>
-  const media = window.matchMedia("(prefers-color-scheme: dark)");
   const root = document.documentElement;
-  const current = () => (root.dataset.theme as "light" | "dark" | undefined) ?? (media.matches ? "dark" : "light");
+  const current = () => (root.dataset.theme as "light" | "dark" | undefined) ?? "light";
 
   const sync = () => {
     const mode = current();
@@ -46,7 +45,6 @@ const t = ui[locale].theme;
       sync();
     });
   });
-  media.addEventListener("change", sync);
   sync();
 </script>
 

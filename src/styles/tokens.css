@@ -1,5 +1,5 @@
 /* Dirección Austral: colores de la landing en modo claro y oscuro (MODES.austral del plugin de Figma)
-   y del logo (lp.light / lp.dark). El modo sigue al sistema salvo que el usuario elija uno: data-theme en <html>. */
+   y del logo (lp.light / lp.dark). Parte siempre en modo claro; el oscuro se activa solo si el usuario lo elige (data-theme="dark" en <html>). */
 
 :root {
   color-scheme: light;
@@ -35,30 +35,6 @@
 :root {
   --footer-ink: #f3f8fb;
   --footer-accent: #35c2e8;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root:not([data-theme="light"]) {
-    color-scheme: dark;
-
-    --hero-bg: #0b1f33;
-    --hero-ink: #f3f8fb;
-    --hero-muted: #9db4c6;
-    --accent: #35c2e8;
-    --on-accent: #0b1f33;
-    --eyebrow: #35c2e8;
-    --page-bg: #0f2740;
-    --page-ink: #f3f8fb;
-    --page-muted: #9db4c6;
-    --card: #143049;
-    --line: #24465f;
-    --eyebrow-l: #35c2e8;
-    --footer-bg: #071524;
-
-    --logo-fg: #f3f8fb;
-    --logo-accent: #35c2e8;
-    --logo-num: #35c2e8;
-  }
 }
 
 :root[data-theme="dark"] {

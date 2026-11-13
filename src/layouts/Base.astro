@@ -3,6 +3,7 @@ import "@fontsource/space-grotesk/700.css";
 import "@fontsource-variable/inter";
 import "../styles/global.css";
 import { ui, homePath, LOCALES, type Locale } from "../i18n/ui";
+import { REVIEW_MODE } from "../config";
 
 interface Props {
   locale: Locale;
@@ -55,14 +56,15 @@ const jsonLd = {
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
+    {/* Versión de revisión: que los buscadores no la indexen (ver src/config.ts). */}
+    {REVIEW_MODE && !noindex && <meta name="robots" content="noindex, nofollow" />}
     {LOCALES.map((l) => <link rel="alternate" hreflang={ui[l].htmlLang} href={new URL(alternates[l], site).href} />)}
     <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, site).href} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/site.webmanifest" />
     <link rel="sitemap" href="/sitemap-index.xml" />
-    <meta name="theme-color" content="#f3f8fb" media="(prefers-color-scheme: light)" />
-    <meta name="theme-color" content="#0b1f33" media="(prefers-color-scheme: dark)" />
+    <meta name="theme-color" content="#f3f8fb" />
 
     <meta property="og:type" content="website" />
     <meta property="og:site_name" content="Latitud53" />
@@ -82,7 +84,7 @@ const jsonLd = {
 
     <script type="application/ld+json" set:html={JSON.stringify(jsonLd)} />
 
-    <!-- Aplica el modo elegido antes de pintar, para que no parpadee. Sin elección, sigue al sistema. -->
+    <!-- Aplica el modo elegido antes de pintar, para que no parpadee. Sin elección, modo claro. -->
     <script is:inline>
       try {
         const saved = localStorage.getItem("theme");

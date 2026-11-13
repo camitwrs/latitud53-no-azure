@@ -14,7 +14,7 @@ const t = ui[Astro.props.locale];
       t.stats.map(([value, label], i) => (
         <div class="item" data-reveal style={`--delay:${i * 0.1}s`}>
           <dt>{label}</dt>
-          <dd data-count={value.startsWith("53") ? "53" : undefined}>{value}</dd>
+          <dd data-count={value.match(/^\d+/)?.[0]}>{value}</dd>
         </div>
       ))
     }
@@ -22,7 +22,8 @@ const t = ui[Astro.props.locale];
 </section>
 
 <script>
-  // El "53° S" cuenta de 0 a 53 al entrar en pantalla (solo con animaciones permitidas; el HTML ya trae el valor final).
+  // Las cifras que empiezan con un número ("53° S", "3") cuentan desde 0 al entrar en pantalla (solo con animaciones
+  // permitidas; el HTML ya trae el valor final).
   if (document.documentElement.classList.contains("reveal")) {
     const ease = (t: number) => 1 - Math.pow(1 - t, 3);
     const io = new IntersectionObserver((entries) => {

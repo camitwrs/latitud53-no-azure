@@ -13,11 +13,7 @@ const t = ui[locale].contact;
 const icons = {
   pin: '<path d="M12 21s7-6.2 7-11a7 7 0 1 0-14 0c0 4.8 7 11 7 11z"/><circle cx="12" cy="10" r="2.5"/>',
   mail: '<rect x="3" y="5" width="18" height="14" rx="2"/><path d="M3 7l9 6 9-6"/>',
-  whatsapp: '<path d="M7.9 20A9 9 0 1 0 4 16.1L2 22Z"/><path d="M9.2 7.5c.3 0 .6.2.7.5l.7 1.7c.1.3 0 .6-.2.8l-.6.6c.6 1.2 1.6 2.2 2.8 2.8l.6-.6c.2-.2.5-.3.8-.2l1.7.7c.3.1.5.4.5.7v1.4c0 .5-.4.9-.9.9C11.1 17 7 12.9 7 8.4c0-.5.4-.9.9-.9z" style="fill:var(--eyebrow);stroke:none"/>',
 };
-// El número todavía es de ejemplo: solo se enlaza a WhatsApp cuando tenga dígitos reales.
-const waDigits = t.info.whatsapp.replace(/\D/g, "");
-const waLink = /X/.test(t.info.whatsapp) ? null : `https://wa.me/${waDigits}`;
 ---
 
 <section id="contacto" class="contact" aria-labelledby="contacto-titulo">
@@ -29,10 +25,6 @@ const waLink = /X/.test(t.info.whatsapp) ? null : `https://wa.me/${waDigits}`;
       <ul class="info">
         <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.pin} /><span>{t.info.place}</span></li>
         <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.mail} /><a href={`mailto:${t.info.email}`}>{t.info.email}</a></li>
-        <li>
-          <svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.whatsapp} />
-          {waLink ? <a href={waLink} rel="noopener">{t.info.whatsapp}</a> : <span>{t.info.whatsapp}</span>}
-        </li>
       </ul>
     </div>
 

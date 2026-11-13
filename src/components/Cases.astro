@@ -1,5 +1,6 @@
 ---
 import ScreenMock from "./ScreenMock.astro";
+import { REVIEW_MODE } from "../config";
 import { ui, type Locale } from "../i18n/ui";
 
 interface Props {
@@ -34,6 +35,13 @@ const t = ui[Astro.props.locale].cases;
               </div>
               <div class="shot">
                 <ScreenMock building={"status" in item ? item.status : undefined} />
+                {/* Solo en modo revisión: avisa que la pantalla es de ejemplo (los productos en desarrollo ya lo muestran). */}
+                {REVIEW_MODE && !("status" in item) && (
+                  <p class="review-note">
+                    <strong>{t.reviewNote[0]}</strong>
+                    <span>{t.reviewNote[1]}{item.title}.</span>
+                  </p>
+                )}
               </div>
             </article>
           </li>
@@ -157,7 +165,29 @@ const t = ui[Astro.props.locale].cases;
   }
   /* drop-shadow sigue la forma del dibujo: en la pantalla con grúa no ensombrece el espacio vacío alrededor. */
   .shot {
+    position: relative;
     transition: transform 0.3s, filter 0.3s;
+  }
+  .review-note {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    right: 12px;
+    display: grid;
+    gap: 2px;
+    padding: 10px 14px;
+    border: 1.5px dashed #35c2e8;
+    border-radius: var(--radius);
+    background: rgb(7 21 36 / 0.88);
+    color: #f3f8fb;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+  }
+  .review-note strong {
+    color: #35c2e8;
+    font-size: 0.75rem;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
   }
   .case:hover .shot {
     transform: translateY(-4px);

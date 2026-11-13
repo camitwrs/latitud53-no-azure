@@ -61,6 +61,7 @@ export const ui = {
           chips: ["Alimentos", "Hotelería", "Magallanes"],
         },
       ],
+      reviewNote: ["Imagen referencial", "Se reemplazará por una captura real de "],
       next: { title: "Más productos en camino.", desc: "Seguimos trazando nuevas coordenadas.", cta: "Escríbenos" },
     },
     steps: {
@@ -82,7 +83,7 @@ export const ui = {
       eyebrow: "Contacto",
       title: "Fijemos el punto de encuentro.",
       text: "Escríbenos para una demo, una alianza o cualquier consulta.",
-      info: { place: "Viña del Mar y Santiago, Chile", email: "contacto@latitud53.cl", whatsapp: "+56 9 XXXX XXXX" },
+      info: { place: "Viña del Mar y Santiago, Chile", email: "contacto@latitud53.cl" },
       fields: {
         name: ["Nombre", "Tu nombre"],
         email: ["Correo", "tu@empresa.cl"],
@@ -154,6 +155,7 @@ export const ui = {
           chips: ["Food", "Hotels", "Magallanes"],
         },
       ],
+      reviewNote: ["Placeholder image", "It will be replaced with a real screenshot of "],
       next: { title: "More products on the way.", desc: "We keep charting new coordinates.", cta: "Write to us" },
     },
     steps: {
@@ -175,7 +177,7 @@ export const ui = {
       eyebrow: "Contact",
       title: "Let's set a meeting point.",
       text: "Write to us for a demo, a partnership or any question.",
-      info: { place: "Viña del Mar and Santiago, Chile", email: "contacto@latitud53.cl", whatsapp: "+56 9 XXXX XXXX" },
+      info: { place: "Viña del Mar and Santiago, Chile", email: "contacto@latitud53.cl" },
       fields: {
         name: ["Name", "Your name"],
         email: ["Email", "you@company.com"],
