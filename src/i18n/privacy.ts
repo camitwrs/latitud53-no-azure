@@ -109,14 +109,14 @@ export const privacy: Record<Locale, { title: string; description: string; updat
       {
         h: "1. Who is responsible for your data",
         p: [
-          `${COMPANY.legalName}, Chilean tax ID (RUT) ${COMPANY.rut}, domiciled in ${COMPANY.address}, represented by its general manager, ${COMPANY.representative}.`,
+          `${COMPANY.legalName}, Chilean tax ID (RUT) ${COMPANY.rut}, based in ${COMPANY.address}, represented by its general manager, ${COMPANY.representative}.`,
           "For anything related to your personal data, see section 8.",
         ],
       },
       {
         h: "2. What data we process",
         p: [
-          "Only what you give us in the contact form: your name, your email address and your message. It belongs to people who write to us through this site.",
+          "Only what you give us in the contact form: your name, your email address and your message. This applies to people who write to us through this site.",
           "We do not ask for sensitive data, such as health information. Please do not include it in your message.",
           "This site does not use advertising or analytics cookies. It only stores in your browser whether you prefer light or dark mode, and that setting is never sent to us. Our hosting provider may log technical connection data, such as your IP address, for security purposes.",
         ],
@@ -131,7 +131,7 @@ export const privacy: Record<Locale, { title: string; description: string; updat
       {
         h: "4. Who we share it with",
         p: [
-          "With providers that deliver services to us and process the data on our behalf, under contract and without using it for their own purposes: website and form hosting (Microsoft Azure) and the email delivery service.",
+          "With providers that deliver services to us and process the data on our behalf, under contract and without using it for their own purposes: website and form hosting (Microsoft Azure) and our email service provider.",
           "We do not disclose your data to any other third party unless required by law or by a competent authority.",
         ],
       },
@@ -157,9 +157,9 @@ export const privacy: Record<Locale, { title: string; description: string; updat
       {
         h: "8. Your rights",
         p: [
-          "You can request access to, rectification, erasure and portability of your data, object to its processing, and withdraw your consent at any time. Withdrawing it does not affect what we already did with it.",
-          "To do so, write to us at {email} explaining what you need. We will acknowledge your request and reply within 30 calendar days at most, which we may extend only once by another 30 days.",
-          "Rectification, erasure and objection are always free of charge. Access is free at least once every quarter.",
+          "You can request access to, rectification, erasure and portability of your data, object to its processing, and withdraw your consent at any time. Withdrawing consent does not affect processing carried out before then.",
+          "To do so, email us at {email} and tell us what you need. We will acknowledge your request and reply within 30 calendar days at most. We may extend that period once, by up to 30 more days.",
+          "Rectification, erasure and objection are always free of charge. Access is free of charge at least once per quarter.",
         ],
       },
       {

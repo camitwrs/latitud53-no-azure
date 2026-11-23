@@ -1,6 +1,4 @@
 ---
-import ScreenMock from "./ScreenMock.astro";
-import { REVIEW_MODE } from "../config";
 import { ui, type Locale } from "../i18n/ui";
 
 interface Props {
@@ -17,37 +15,41 @@ const t = ui[Astro.props.locale].cases;
       <h2 id="productos-titulo">{t.title}</h2>
     </header>
 
-    <ul class="list">
+    <!-- Una ficha por producto: número, nombre y descripción, y a la derecha el recorrido que cubre (contenido real,
+         no una pantalla). El que está en desarrollo lleva el recorrido punteado, sin avance. -->
+    <ol class="list">
       {
-        t.items.map((item, i) => (
-          <li class:list={["case", { flip: i % 2 === 1 }]} data-reveal>
+        t.items.map((item) => (
+          <li class="row" data-reveal data-dev={"dev" in item ? "" : undefined}>
             <article aria-labelledby={`caso-${item.id}`}>
-              <div class="text">
+              <div class="main">
                 <p class="tag">{item.tag}</p>
                 <div class="name">
                   <h3 id={`caso-${item.id}`}>{item.title}</h3>
-                  {"status" in item && <span class="status">{item.status}</span>}
+                  <span class="status">{item.status}</span>
                 </div>
                 <p class="desc">{item.desc}</p>
                 <ul class="chips">
                   {item.chips.map((c) => <li>{c}</li>)}
                 </ul>
               </div>
-              <div class="shot">
-                <ScreenMock building={"status" in item ? item.status : undefined} />
-                {/* Solo en modo revisión: avisa que la pantalla es de ejemplo (los productos en desarrollo ya lo muestran). */}
-                {REVIEW_MODE && !("status" in item) && (
-                  <p class="review-note">
-                    <strong>{t.reviewNote[0]}</strong>
-                    <span>{t.reviewNote[1]}{item.title}.</span>
-                  </p>
-                )}
+
+              <div class="trail">
+                <p class="trail-label">{t.routeLabel}</p>
+                <ol class="route" style={`--n:${item.route.length}`}>
+                  {item.route.map((step, k) => (
+                    <li style={`--i:${k}`}>
+                      <span class="node" aria-hidden="true"></span>
+                      <span class="step">{step}</span>
+                    </li>
+                  ))}
+                </ol>
               </div>
             </article>
           </li>
         ))
       }
-    </ul>
+    </ol>
 
     <div class="next" data-reveal>
       <p>
@@ -58,6 +60,33 @@ const t = ui[Astro.props.locale].cases;
   </div>
 </section>
 
+<script>
+  // El recorrido de cada producto avanza con el scroll: --p va de 0 (el recorrido entra por abajo) a 1 (ya está en el tercio inferior de la pantalla).
+  // Solo con animaciones activas; si no, el CSS deja --p en 1 y todo queda dibujado.
+  if (document.documentElement.classList.contains("reveal")) {
+    const routes = [...document.querySelectorAll<HTMLElement>(".row:not([data-dev]) .route")];
+    let ticking = false;
+    const update = () => {
+      ticking = false;
+      const vh = window.innerHeight;
+      for (const r of routes) {
+        const { top, height } = r.getBoundingClientRect();
+        const p = Math.min(1, Math.max(0, (vh * 0.9 - top) / (height * 1.2 + vh * 0.1)));
+        r.style.setProperty("--p", p.toFixed(3));
+      }
+    };
+    const onScroll = () => {
+      if (!ticking) {
+        ticking = true;
+        requestAnimationFrame(update);
+      }
+    };
+    update();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", onScroll);
+  }
+</script>
+
 <style>
   .cases {
     background: var(--page-bg);
@@ -67,7 +96,7 @@ const t = ui[Astro.props.locale].cases;
     display: grid;
     gap: 12px;
     max-width: 900px;
-    margin-bottom: 72px;
+    margin-bottom: 64px;
   }
   .eyebrow {
     color: var(--eyebrow-l);
@@ -76,30 +105,27 @@ const t = ui[Astro.props.locale].cases;
     font-size: clamp(2rem, 3.6vw, 2.75rem);
     line-height: 1.1;
   }
+
   .list {
-    display: grid;
-    gap: 96px;
     margin: 0;
     padding: 0;
     list-style: none;
+    border-bottom: 1px solid var(--line);
+  }
+  .row {
+    border-top: 1px solid var(--line);
   }
   article {
     display: grid;
-    grid-template-columns: minmax(0, 480px) minmax(0, 640px);
-    justify-content: space-between;
-    align-items: center;
-    gap: 80px;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 460px);
+    gap: 48px;
+    align-items: start;
+    padding: 56px 24px 56px 0;
   }
-  /* Casos invertidos: la pantalla va a la izquierda, así que las columnas también se invierten (pantalla 640, texto 480). */
-  .flip article {
-    grid-template-columns: minmax(0, 640px) minmax(0, 480px);
-  }
-  .flip .text {
-    order: 2;
-  }
-  .text {
+
+  .main {
     display: grid;
-    gap: 18px;
+    gap: 16px;
   }
   .tag {
     color: var(--page-muted);
@@ -115,9 +141,27 @@ const t = ui[Astro.props.locale].cases;
     gap: 8px 16px;
   }
   h3 {
-    font-size: clamp(2.25rem, 4vw, 3rem);
+    font-size: clamp(2.25rem, 4.2vw, 3.25rem);
   }
-  /* Estado del producto cuando todavía no está en operación (por ejemplo "En desarrollo"). */
+  /* Al pasar el cursor por la ficha, el nombre se tiñe de izquierda a derecha con el color de acento. */
+  @media (hover: hover) {
+    h3 {
+      background: linear-gradient(90deg, var(--eyebrow-l) 50%, currentColor 50%) 100% 0 / 200% 100% no-repeat;
+      -webkit-background-clip: text;
+      background-clip: text;
+      -webkit-text-fill-color: transparent;
+      transition: background-position 0.55s cubic-bezier(0.65, 0, 0.35, 1);
+    }
+    .row:hover h3 {
+      background-position: 0 0;
+    }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    h3 {
+      transition: none;
+    }
+  }
+  /* Estado del producto: en operación (punto fijo) o en desarrollo (punto que late). */
   .status {
     display: inline-flex;
     align-items: center;
@@ -135,6 +179,8 @@ const t = ui[Astro.props.locale].cases;
     height: 8px;
     border-radius: 50%;
     background: var(--accent);
+  }
+  [data-dev] .status::before {
     animation: status-pulse 1.8s ease-in-out infinite;
   }
   @keyframes status-pulse {
@@ -143,6 +189,7 @@ const t = ui[Astro.props.locale].cases;
     }
   }
   .desc {
+    max-width: 62ch;
     color: var(--page-muted);
     font-size: 1.125rem;
   }
@@ -155,56 +202,125 @@ const t = ui[Astro.props.locale].cases;
     list-style: none;
   }
   .chips li {
-    transition: background 0.2s, color 0.2s;
     padding: 8px 14px;
     border: 1px solid var(--eyebrow-l);
     border-radius: 999px;
     color: var(--eyebrow-l);
     font-weight: 500;
     font-size: 0.8125rem;
+    transition: background 0.2s, color 0.2s;
   }
-  /* drop-shadow sigue la forma del dibujo: en la pantalla con grúa no ensombrece el espacio vacío alrededor. */
-  .shot {
-    position: relative;
-    transition: transform 0.3s, filter 0.3s;
-  }
-  .review-note {
-    position: absolute;
-    top: 12px;
-    left: 12px;
-    right: 12px;
-    display: grid;
-    gap: 2px;
-    padding: 10px 14px;
-    border: 1.5px dashed #35c2e8;
-    border-radius: var(--radius);
-    background: rgb(7 21 36 / 0.88);
-    color: #f3f8fb;
-    font-size: 0.8125rem;
-    line-height: 1.4;
-  }
-  .review-note strong {
-    color: #35c2e8;
-    font-size: 0.75rem;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-  }
-  .case:hover .shot {
-    transform: translateY(-4px);
-    filter: drop-shadow(0 18px 20px rgb(11 31 51 / 0.18));
-  }
-  .case:hover .chips li {
+  .row:hover .chips li {
     background: var(--eyebrow-l);
     color: var(--card);
   }
+
+  /* Recorrido: nodos unidos por una línea que se dibuja al aparecer; cada tramo entra un poco después del anterior. */
+  .trail {
+    display: grid;
+    gap: 20px;
+    padding-top: 6px;
+  }
+  .trail-label {
+    color: var(--page-muted);
+    font-weight: 500;
+    font-size: 0.8125rem;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+  }
+  /* Siempre en vertical: nodos a la izquierda unidos por una línea, y cada paso debajo del anterior. Así cabe cualquier
+     cantidad de pasos y los tres productos se ven con el mismo formato. */
+  .route {
+    display: grid;
+    gap: 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .route li {
+    position: relative;
+    padding-left: 30px;
+  }
+  .node {
+    position: absolute;
+    left: 0;
+    top: 2px;
+    z-index: 1;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--eyebrow-l);
+    transition: transform 0.3s;
+  }
+  .route li::after {
+    content: "";
+    position: absolute;
+    top: 18px;
+    bottom: -16px;
+    left: 6px;
+    width: 2px;
+    background: var(--eyebrow-l);
+    transform-origin: top;
+    transition: transform 0.7s cubic-bezier(0.65, 0, 0.35, 1);
+    transition-delay: calc(0.25s + var(--i) * 0.28s);
+  }
+  .route li:last-child::after {
+    display: none;
+  }
+  .step {
+    font-family: var(--font-display);
+    font-weight: 700;
+    font-size: 1.0625rem;
+    line-height: 1.25;
+    letter-spacing: var(--tracking-display);
+  }
+  .row:hover .node {
+    transform: scale(1.25);
+  }
+  /* En desarrollo: nodos huecos y línea punteada, sin avance. */
+  [data-dev] .node {
+    background: transparent;
+    border: 2px dashed var(--page-muted);
+  }
+  [data-dev] .route li::after {
+    background: none;
+    border-left: 2px dashed var(--page-muted);
+    width: 0;
+    opacity: 0.6;
+  }
+  [data-dev] .step {
+    color: var(--page-muted);
+  }
+
+  /* Solo con animaciones (html.reveal): el recorrido avanza con el scroll. El script pone --p (0 a 1) en cada recorrido;
+     el tramo i se dibuja cuando p*(n-1) pasa de i, y cada nodo se enciende al llegarle la línea. Sin JS o con
+     movimiento reducido --p queda en 1 y todo se ve completo. */
+  .route {
+    --p: 1;
+    --reach: calc(var(--p) * (var(--n) - 1));
+  }
+  :global(.reveal) .row:not([data-dev]) .route li::after {
+    transform: scaleY(clamp(0, calc(var(--reach) - var(--i)), 1));
+    transition: none;
+  }
+  :global(.reveal) .row:not([data-dev]) .node {
+    background: color-mix(
+      in srgb,
+      var(--eyebrow-l) calc(clamp(0, (var(--reach) - var(--i) + 0.3) * 333, 100) * 1%),
+      var(--line)
+    );
+    transition: transform 0.3s;
+  }
+  :global(.reveal) .row[data-dev] .route li::after {
+    transform: none;
+  }
+
   .next {
     display: flex;
     justify-content: space-between;
     align-items: center;
     gap: 24px;
-    margin-top: 96px;
-    padding-top: 28px;
-    border-top: 1px solid var(--line);
+    margin-top: 72px;
   }
   .next p {
     max-width: 800px;
@@ -224,6 +340,12 @@ const t = ui[Astro.props.locale].cases;
     text-underline-offset: 4px;
   }
 
+  @media (max-width: 1100px) {
+    article {
+      grid-template-columns: minmax(0, 1fr);
+      gap: 24px;
+    }
+  }
   @media (max-width: 900px) {
     .cases {
       padding-block: 56px;
@@ -231,23 +353,93 @@ const t = ui[Astro.props.locale].cases;
     .head {
       margin-bottom: 40px;
     }
-    .list {
-      gap: 48px;
-    }
-    article,
-    .flip article {
+    article {
       grid-template-columns: 1fr;
       gap: 20px;
+      padding: 36px 0;
     }
-    /* En móvil, primero el texto del producto y debajo su pantalla, así cada pantalla queda bajo su nombre. */
-    .text,
-    .flip .text {
-      order: 0;
+    /* En móvil el recorrido va en horizontal (menos alto); si no cabe en una fila, baja a una segunda, sin deslizador. */
+    .route {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px 0;
+    }
+    .route li {
+      padding: 26px 10px 0 0;
+    }
+    /* Una sola línea continua: el tercer paso sigue hasta el borde, baja por el espacio entre filas y entra al cuarto
+       paso desde la izquierda (codo en dos piezas: caja del tercer paso + tramo corto antes del cuarto). */
+    .route li:nth-child(3n)::after {
+      right: 0;
+    }
+    .route li:nth-child(3):not(:last-child)::before {
+      content: "";
+      position: absolute;
+      top: 6px;
+      right: 0;
+      left: calc(-200% + 6px);
+      height: calc(100% + 4px);
+      border-right: 2px solid var(--eyebrow-l);
+      border-bottom: 2px solid var(--eyebrow-l);
+      border-bottom-right-radius: 10px;
+      pointer-events: none;
+    }
+    .route li:nth-child(4)::before {
+      content: "";
+      position: absolute;
+      top: -10px;
+      left: 6px;
+      width: 2px;
+      height: 16px;
+      background: var(--eyebrow-l);
+    }
+    [data-dev] .route li:nth-child(3):not(:last-child)::before {
+      border-color: var(--page-muted);
+      border-right-style: dashed;
+      border-bottom-style: dashed;
+      opacity: 0.6;
+    }
+    [data-dev] .route li:nth-child(4)::before {
+      background: none;
+      width: 0;
+      border-left: 2px dashed var(--page-muted);
+      opacity: 0.6;
+    }
+    .node {
+      top: 0;
+    }
+    .route li::after {
+      top: 6px;
+      bottom: auto;
+      left: 20px;
+      right: 6px;
+      width: auto;
+      height: 2px;
+      transform-origin: left;
+    }
+    :global(.reveal) .row:not([data-dev]) .route li::after {
+      transform: scaleX(clamp(0, calc(var(--reach) - var(--i)), 1));
+    }
+    /* El codo aparece cuando la línea llega al tercer paso. */
+    :global(.reveal) .row:not([data-dev]) .route li:nth-child(3)::before,
+    :global(.reveal) .row:not([data-dev]) .route li:nth-child(4)::before {
+      opacity: clamp(0, calc((var(--reach) - 2) * 4), 1);
+    }
+    [data-dev] .route li::after {
+      width: auto;
+      height: 0;
+      border-left: 0;
+      border-top: 2px dashed var(--page-muted);
+    }
+    .step {
+      display: block;
+      font-size: 0.875rem;
+      overflow-wrap: anywhere;
     }
     .next {
       flex-direction: column;
       align-items: flex-start;
-      margin-top: 48px;
+      margin-top: 40px;
     }
   }
 </style>

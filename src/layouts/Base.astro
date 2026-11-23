@@ -3,7 +3,6 @@ import "@fontsource/space-grotesk/700.css";
 import "@fontsource-variable/inter";
 import "../styles/global.css";
 import { ui, homePath, LOCALES, type Locale } from "../i18n/ui";
-import { REVIEW_MODE } from "../config";
 
 interface Props {
   locale: Locale;
@@ -56,8 +55,6 @@ const jsonLd = {
     <title>{pageTitle}</title>
     <meta name="description" content={pageDescription} />
     {noindex ? <meta name="robots" content="noindex" /> : <link rel="canonical" href={canonical} />}
-    {/* Versión de revisión: que los buscadores no la indexen (ver src/config.ts). */}
-    {REVIEW_MODE && !noindex && <meta name="robots" content="noindex, nofollow" />}
     {LOCALES.map((l) => <link rel="alternate" hreflang={ui[l].htmlLang} href={new URL(alternates[l], site).href} />)}
     <link rel="alternate" hreflang="x-default" href={new URL(alternates.es, site).href} />
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />

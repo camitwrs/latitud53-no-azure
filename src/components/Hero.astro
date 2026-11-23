@@ -1,5 +1,6 @@
 ---
 import { heroGlobeSvg } from "../lib/globe";
+import DotField from "./DotField.astro";
 import { ui, type Locale } from "../i18n/ui";
 
 interface Props {
@@ -12,6 +13,7 @@ const words = t.title.split(" ");
 ---
 
 <section class="hero">
+  <DotField />
   <div class="container grid">
     <div class="text">
       <p class="eyebrow">{t.eyebrow}</p>
@@ -31,7 +33,15 @@ const words = t.title.split(" ");
         <a class="btn secondary" href="#productos">{t.cta2}</a>
       </div>
     </div>
-    <div class="globe" data-globe set:html={heroGlobeSvg()} />
+    <div class="globe-wrap">
+      <!-- Órbitas decorativas alrededor del globo: anillos inclinados con satélites que giran a distinta velocidad. -->
+      <svg class="orbits" viewBox="-60 -60 220 220" aria-hidden="true">
+        <g class="orbit o1"><circle class="ring" cx="50" cy="50" r="62" /><circle class="sat" cx="112" cy="50" r="2.4" /></g>
+        <g class="orbit o2"><circle class="ring" cx="50" cy="50" r="74" /><circle class="sat" cx="50" cy="-24" r="1.8" /><circle class="sat dim" cx="124" cy="50" r="1.2" /></g>
+        <g class="orbit o3"><circle class="ring" cx="50" cy="50" r="86" /><circle class="sat" cx="-36" cy="50" r="2" /></g>
+      </svg>
+      <div class="globe" data-globe set:html={heroGlobeSvg()} />
+    </div>
   </div>
 </section>
 
@@ -114,8 +124,14 @@ const words = t.title.split(" ");
 
 <style>
   .hero {
+    position: relative;
+    overflow: hidden;
     background: var(--hero-bg);
     color: var(--hero-ink);
+  }
+  .grid {
+    position: relative;
+    z-index: 1; /* por encima del campo de puntos */
   }
   .grid {
     display: grid;
@@ -181,7 +197,75 @@ const words = t.title.split(" ");
     border: 1.5px solid var(--hero-ink);
     color: var(--hero-ink);
   }
+  .globe-wrap {
+    position: relative;
+  }
+  /* Órbitas: tres anillos inclinados distintos; cada satélite gira alrededor del centro a su propio ritmo. */
+  .orbits {
+    position: absolute;
+    left: -24%;
+    top: -24%;
+    width: 148%;
+    height: 148%;
+    pointer-events: none;
+    overflow: visible;
+  }
+  .ring {
+    fill: none;
+    stroke: var(--hero-ink);
+    stroke-opacity: 0.16;
+    stroke-width: 0.5;
+    stroke-dasharray: 1.5 3;
+  }
+  .sat {
+    fill: var(--accent);
+    transform-box: view-box;
+    transform-origin: 50px 50px;
+  }
+  .sat.dim {
+    fill-opacity: 0.6;
+  }
+  .orbit {
+    transform-box: view-box;
+    transform-origin: 50px 50px;
+  }
+  .o1 {
+    transform: rotate(-14deg) scaleY(0.42);
+  }
+  .o2 {
+    transform: rotate(32deg) scaleY(0.3);
+  }
+  .o3 {
+    transform: rotate(-52deg) scaleY(0.24);
+  }
+  .o1 .sat {
+    animation: orbit 22s linear infinite;
+  }
+  .o2 .sat {
+    animation: orbit 31s linear infinite reverse;
+  }
+  .o3 .sat {
+    animation: orbit 46s linear infinite;
+  }
+  @keyframes orbit {
+    to {
+      transform: rotate(1turn);
+    }
+  }
+  /* El globo es opaco: un disco del color del fondo tapa las órbitas y los puntos que pasan por detrás, así nada se
+     superpone al globo. */
+  .globe {
+    position: relative;
+  }
+  .globe::before {
+    content: "";
+    position: absolute;
+    inset: 4%;
+    border-radius: 50%;
+    background: var(--hero-bg);
+  }
   .globe :global(svg) {
+    position: relative;
     width: 100%;
     height: auto;
   }
@@ -245,7 +329,7 @@ const words = t.title.split(" ");
       flex: 1 1 100%;
       text-align: center;
     }
-    .globe {
+    .globe-wrap {
       width: min(240px, 70%);
       margin-inline: auto;
     }
