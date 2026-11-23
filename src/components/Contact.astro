@@ -9,6 +9,10 @@ interface Props {
   locale: Locale;
 }
 
+// Mientras no estén listos el correo contacto@latitud53.cl ni la API de contacto, se oculta el formulario y el correo.
+// Al habilitarlos, basta con poner esto en true.
+const CONTACT_ENABLED = false;
+
 const { locale } = Astro.props;
 const t = ui[locale].contact;
 const icons = {
@@ -23,14 +27,14 @@ const icons = {
     <div class="intro" data-reveal>
       <p class="eyebrow">{t.eyebrow}</p>
       <h2 id="contacto-titulo">{t.title}</h2>
-      <p class="text">{t.text}</p>
+      <p class="text">{CONTACT_ENABLED ? t.text : t.soon}</p>
       <ul class="info">
         <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.pin} /><span>{t.info.place}</span></li>
-        <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.mail} /><a href={`mailto:${t.info.email}`}>{t.info.email}</a></li>
+        {CONTACT_ENABLED && <li><svg viewBox="0 0 24 24" aria-hidden="true" set:html={icons.mail} /><a href={`mailto:${t.info.email}`}>{t.info.email}</a></li>}
       </ul>
     </div>
 
-    <form class="form" action="/api/contact" method="post" data-contact data-locale={locale} data-policy={POLICY_VERSION} data-reveal style="--delay:0.1s">
+    {CONTACT_ENABLED && <form class="form" action="/api/contact" method="post" data-contact data-locale={locale} data-policy={POLICY_VERSION} data-reveal style="--delay:0.1s">
       {
         (["name", "email", "message"] as const).map((key) => {
           const [label, placeholder] = t.fields[key];
@@ -71,7 +75,7 @@ const icons = {
         <span class="label">{t.send}</span>
       </button>
       <p class="status" role="status" aria-live="polite" data-sent={t.sent} data-error={t.error}></p>
-    </form>
+    </form>}
   </div>
 </section>
 

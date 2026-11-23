@@ -89,6 +89,7 @@ export const ui = {
       eyebrow: "Contacto",
       title: "Fijemos el punto de encuentro.",
       text: "Escríbenos para una demo, una alianza o cualquier consulta.",
+      soon: "Estamos habilitando nuestro canal de contacto. Muy pronto podrás escribirnos desde aquí.",
       info: { place: "Viña del Mar, Punta Arenas y Santiago, Chile", email: "contacto@latitud53.cl" },
       fields: {
         name: ["Nombre", "Tu nombre"],
@@ -189,6 +190,7 @@ export const ui = {
       eyebrow: "Contact",
       title: "Let's set a meeting point.",
       text: "Reach out for a demo, a partnership or any question.",
+      soon: "We're setting up our contact channel. You'll be able to write to us from here very soon.",
       info: { place: "Viña del Mar, Punta Arenas and Santiago, Chile", email: "contacto@latitud53.cl" },
       fields: {
         name: ["Name", "Your name"],
